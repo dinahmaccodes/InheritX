@@ -25,9 +25,7 @@ impl TestContext {
         {
             Ok(pool) => pool,
             Err(err) => {
-                eprintln!(
-                    "Skipping integration test: unable to connect to DATABASE_URL: {err}"
-                );
+                eprintln!("Skipping integration test: unable to connect to DATABASE_URL: {err}");
                 return None;
             }
         };
