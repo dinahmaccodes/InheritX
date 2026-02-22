@@ -1,6 +1,10 @@
 mod helpers;
 
-use reqwest::StatusCode;
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+};
+use tower::ServiceExt; // for `oneshot`
 
 #[tokio::test]
 async fn health_db_returns_200_when_database_connected() {
@@ -9,9 +13,13 @@ async fn health_db_returns_200_when_database_connected() {
     };
 
     let response = test_context
-        .client
-        .get(format!("{}/health/db", test_context.base_url))
-        .send()
+        .app
+        .oneshot(
+            Request::builder()
+                .uri("/health/db")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .expect("request to /health/db failed");
 
@@ -27,9 +35,13 @@ async fn health_db_returns_500_when_database_is_unavailable() {
     test_context.pool.close().await;
 
     let response = test_context
-        .client
-        .get(format!("{}/health/db", test_context.base_url))
-        .send()
+        .app
+        .oneshot(
+            Request::builder()
+                .uri("/health/db")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .expect("request to /health/db failed");
 

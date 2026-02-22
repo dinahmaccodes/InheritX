@@ -1,14 +1,11 @@
+use axum::Router;
 use inheritx_backend::{create_app, Config};
-use reqwest::Client;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::env;
-use tokio::{net::TcpListener, task::JoinHandle};
 
 pub struct TestContext {
-    pub client: Client,
-    pub base_url: String,
+    pub app: Router,
     pub pool: PgPool,
-    server_handle: JoinHandle<()>,
 }
 
 impl TestContext {
@@ -45,28 +42,6 @@ impl TestContext {
             .await
             .expect("failed to create app");
 
-        let listener = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("failed to bind test listener");
-        let address = listener.local_addr().expect("failed to read local addr");
-
-        let server_handle = tokio::spawn(async move {
-            axum::serve(listener, app)
-                .await
-                .expect("test server exited unexpectedly");
-        });
-
-        Some(Self {
-            client: Client::new(),
-            base_url: format!("http://{address}"),
-            pool,
-            server_handle,
-        })
-    }
-}
-
-impl Drop for TestContext {
-    fn drop(&mut self) {
-        self.server_handle.abort();
+        Some(Self { app, pool })
     }
 }
